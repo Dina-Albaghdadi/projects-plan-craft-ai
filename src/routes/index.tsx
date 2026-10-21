@@ -59,7 +59,7 @@ function Index() {
 function CreateForm() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ title: "", description: "", goal: "", additional_context: "" });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
   const [savedId, setSavedId] = useState<string | null>(null);
   const m = useMutation({
     mutationFn: (d: typeof form) => createRequest({ data: d }),
@@ -73,7 +73,7 @@ function CreateForm() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (m.isPending) return;
-    const errs: Record<string, string> = {};
+    const errs: { title?: string; description?: string } = {};
     if (!form.title.trim()) errs.title = "Please enter a project title.";
     if (!form.description.trim()) errs.description = "Please describe your project.";
     setErrors(errs);
@@ -114,7 +114,7 @@ function CreateForm() {
   );
 }
 
-function Field({ id, label, required, error, children }: { id: string; label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+function Field({ id, label, required, error, children }: { id: string; label: string; required?: boolean; error?: string | undefined; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}{required && <span className="text-destructive"> *</span>}</Label>
