@@ -85,27 +85,33 @@ export const triggerPlanGeneration = createServerFn({ method: "POST" })
     const db = await admin();
     const { data: req } = await db
       .from("project_requests")
-      .select("id, title, description, goal, additional_context, status")
+      .select("id, status")
       .eq("id", data.id)
       .maybeSingle();
     if (!req) return { ok: false as const, message: "Request not found." };
     if (req.status === "processing") {
       return { ok: false as const, message: "This plan is already being generated." };
     }
+    const prevStatus = req.status;
+    await db.from("project_requests").update({ status: "processing" }).eq("id", data.id);
     try {
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      const secret = process.env["N8N_WEBHOOK_SECRET"];
+      if (secret) headers["x-plancraft-secret"] = secret;
       const res = await fetch(webhook, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-plancraft-secret": process.env["N8N_WEBHOOK_SECRET"] ?? "",
-        },
-        body: JSON.stringify(req),
+        headers,
+        body: JSON.stringify({ request_id: req.id }),
         signal: AbortSignal.timeout(15000),
       });
-      if (!res.ok) throw new Error(String(res.status));
-      await db.from("project_requests").update({ status: "processing" }).eq("id", data.id);
-      return { ok: true as const, message: "Plan generation started." };
-    } catch {
+      if (!res.ok) {
+        console.error(`n8n webhook failed [${res.status}]: ${await res.text()}`);
+        throw new Error(String(res.status));
+      }
+      return { ok: true as const, message: "Your plan is being generated. This page will update when it's ready." };
+    } catch (e) {
+      console.error("n8n webhook error", e);
+      await db.from("project_requests").update({ status: prevStatus }).eq("id", data.id);
       return { ok: false as const, message: "The automation service could not be reached. Please try again later." };
     }
   });

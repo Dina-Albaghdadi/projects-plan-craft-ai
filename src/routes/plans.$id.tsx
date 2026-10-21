@@ -69,14 +69,23 @@ function PlanPage() {
               <Button onClick={generate} disabled={busy || q.data.request.status === "processing"}>
                 {busy ? "Checking…" : q.data.plan ? "Regenerate Plan" : "Generate My Plan"}
               </Button>
-              {msg && <p role="status" className="text-sm text-muted-foreground">{msg}</p>}
+              {msg && q.data.request.status !== "completed" && <p role="status" className="text-sm text-muted-foreground">{msg}</p>}
             </div>
           </article>
-          {q.data.plan ? <PlanView plan={q.data.plan} /> : (
-            <p className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              This request has been saved. AI plan generation will be available once the n8n workflow is connected.
+          {q.data.request.status === "processing" ? (
+            <p role="status" className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              Your plan is being generated. This page checks for updates every few seconds.
             </p>
-          )}
+          ) : q.data.request.status === "failed" ? (
+            <p role="alert" className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-center text-sm text-destructive">
+              Plan generation failed. Please try again.
+            </p>
+          ) : null}
+          {q.data.plan && q.data.request.status !== "processing" ? <PlanView plan={q.data.plan} /> : (!q.data.plan && q.data.request.status !== "processing" && q.data.request.status !== "failed") ? (
+            <p className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              This request has been saved. Click "Generate My Plan" to create it.
+            </p>
+          ) : null}
         </>
       )}
     </main>
