@@ -83,17 +83,33 @@ export const triggerPlanGeneration = createServerFn({ method: "POST" })
       };
     }
     const db = await admin();
-    const { data: req } = await db
-      .from("project_requests")
-      .select("id, status")
-      .eq("id", data.id)
+    const { data: existingPlan } = await db
+      .from("project_plans")
+      .select("id")
+      .eq("request_id", data.id)
       .maybeSingle();
-    if (!req) return { ok: false as const, message: "Request not found." };
-    if (req.status === "processing") {
-      return { ok: false as const, message: "This plan is already being generated." };
+    if (existingPlan) {
+      return { ok: false as const, message: "A plan already exists for this request." };
     }
-    const prevStatus = req.status;
-    await db.from("project_requests").update({ status: "processing" }).eq("id", data.id);
+    // Atomic claim: only one caller can move pending/failed -> processing,
+    // so double clicks or parallel tabs cannot start two generations.
+    const { data: claimed } = await db
+      .from("project_requests")
+      .update({ status: "processing" })
+      .eq("id", data.id)
+      .in("status", ["pending", "failed"])
+      .select("id, status")
+      .maybeSingle();
+    if (!claimed) {
+      const { data: cur } = await db.from("project_requests").select("status").eq("id", data.id).maybeSingle();
+      if (!cur) return { ok: false as const, message: "Request not found." };
+      return {
+        ok: false as const,
+        message: cur.status === "processing" ? "This plan is already being generated." : "This request can't be generated again.",
+      };
+    }
+    const req = { id: data.id };
+    const prevStatus = "pending";
     try {
       const headers: Record<string, string> = { "content-type": "application/json" };
       const secret = process.env["N8N_WEBHOOK_SECRET"];
