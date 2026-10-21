@@ -20,7 +20,7 @@ async function admin() {
 }
 
 export const createRequest = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => createSchema.parse(input))
+  .validator((input: unknown) => createSchema.parse(input))
   .handler(async ({ data }) => {
     const db = await admin();
     const { data: row, error } = await db
@@ -49,7 +49,7 @@ export const listRequests = createServerFn({ method: "GET" }).handler(async () =
 });
 
 export const getRequest = createServerFn({ method: "GET" })
-  .inputValidator((input: unknown) => idSchema.parse(input))
+  .validator((input: unknown) => idSchema.parse(input))
   .handler(async ({ data }) => {
     const db = await admin();
     const { data: request, error } = await db
@@ -73,7 +73,7 @@ export const getRequest = createServerFn({ method: "GET" })
 // set status to "processing", and return immediately; n8n writes the plan
 // to project_plans and the UI polls for the result.
 export const triggerPlanGeneration = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => idSchema.parse(input))
+  .validator((input: unknown) => idSchema.parse(input))
   .handler(async ({ data }) => {
     const webhook = process.env["N8N_WEBHOOK_URL"];
     if (!webhook) {

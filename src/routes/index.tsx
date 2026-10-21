@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const requestsQuery = queryOptions({ queryKey: ["requests"], queryFn: () => listRequests() });
+const requestsQuery = queryOptions({ queryKey: ["requests"], queryFn: () => listRequests() });
 
 export const Route = createFileRoute("/")({
   head: () => ({
