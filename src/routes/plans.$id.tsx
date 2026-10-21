@@ -66,9 +66,11 @@ function PlanPage() {
             <Detail label="Main goal" value={q.data.request.goal} />
             <Detail label="Additional context" value={q.data.request.additional_context} />
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Button onClick={generate} disabled={busy || q.data.request.status === "processing"}>
-                {busy ? "Checking…" : q.data.plan ? "Regenerate Plan" : "Generate My Plan"}
-              </Button>
+              {!q.data.plan && q.data.request.status !== "completed" && (
+                <Button onClick={generate} disabled={busy || q.data.request.status === "processing"}>
+                  {busy ? "Starting…" : "Generate My Plan"}
+                </Button>
+              )}
               {msg && q.data.request.status !== "completed" && <p role="status" className="text-sm text-muted-foreground">{msg}</p>}
             </div>
           </article>
