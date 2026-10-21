@@ -78,7 +78,7 @@ function PlanPage() {
             <p role="status" className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
               Your plan is being generated. This page checks for updates every few seconds.
             </p>
-          ) : q.data.request.status === "failed" ? (
+          ) : q.data.request.status === "failed" && !q.data.plan ? (
             <p role="alert" className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-center text-sm text-destructive">
               Plan generation failed. Please try again.
             </p>
